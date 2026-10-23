@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisExam • Browser Anti-Screenshot & Secure Examination Platform</title>
+  <meta name="description" content="In-browser forensic watermarking, anti-screenshot proctoring, LeetCode coding environment, and leak tracer for high-stakes online examinations.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Socket.io Client for Real-Time Proctoring Telemetry -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Monaco Editor AMD Loader for Production Coding Questions -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+</head>
+<body>
+
+  <!-- Anti-Print Shield (Renders solid black when user presses Ctrl+P or tries Print to PDF) -->
+  <div id="print-shield-warning" class="print-only">
+    <h1>CONFIDENTIAL EXAMINATION MATERIAL</h1>
+    <p>Printing or exporting this assessment is strictly prohibited and constitutes an academic integrity violation.</p>
+    <p>This event has been logged with your student ID, session token, and IP address.</p>
+  </div>
+
+  <!-- Main Application Wrapper -->
+  <div id="app-container">
+    
+    <!-- Top Global Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="shield-badge">
+          <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">AegisExam <span class="tag-badge">SENTINEL</span></h1>
+          <p class="brand-subtitle">Browser-Enforced Anti-Capture & Forensic Watermark Platform</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs" role="tablist">
+        <button class="nav-tab active" id="tab-studio" data-target="view-studio" role="tab">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Question Studio
+        </button>
+        <button class="nav-tab" id="tab-exam" data-target="view-exam" role="tab">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          Student Exam View
+          <span class="live-dot" title="Active Proctoring Shield"></span>
+        </button>
+        <button class="nav-tab" id="tab-invigilator" data-target="view-invigilator" role="tab">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Invigilator Monitor
+          <span class="live-dot" style="background:#f43f5e;" title="Real-Time Telemetry Stream"></span>
+        </button>
+        <button class="nav-tab" id="tab-tracer" data-target="view-tracer" role="tab">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6M8 11h6"/></svg>
+          Forensic Leak Tracer
+        </button>
+        <button class="nav-tab" id="tab-architecture" data-target="view-architecture" role="tab">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Myth vs Reality
+        </button>
+      </nav>
+
+      <!-- Role Switcher & Identity Header -->
+      <div class="role-switcher-container">
+        <button class="role-pill-btn" id="btn-role-menu" title="Switch User Role for Evaluation">
+          <span class="role-badge-tag admin" id="header-role-badge">ADMIN</span>
+          <span id="header-user-name">Dr. Eleanor Vance</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        
+        <div class="role-dropdown-menu" id="role-dropdown">
+          <div class="role-dropdown-header">Switch Role & User Context</div>
+          <button class="role-menu-item active" data-role="admin">
+            <div>
+              <strong>Dr. Eleanor Vance</strong><br>
+              <small style="color:var(--text-muted)">Administrator / Creator</small>
+            </div>
+            <span class="role-badge-tag admin">ADMIN</span>
+          </button>
+          <button class="role-menu-item" data-role="student">
+            <div>
+              <strong>Sarah Jenkins</strong><br>
+              <small style="color:var(--text-muted)">Candidate (MIT-2026-CS8891)</small>
+            </div>
+            <span class="role-badge-tag student">STUDENT</span>
+          </button>
+          <button class="role-menu-item" data-role="invigilator">
+            <div>
+              <strong>Officer Marcus Ray</strong><br>
+              <small style="color:var(--text-muted)">Invigilator / Reviewer</small>
+            </div>
+            <span class="role-badge-tag invigilator">PROCTOR</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Status -->
+      <div class="header-status">
+        <div class="status-indicator">
+          <span class="pulse-ring"></span>
+          <span class="status-text" id="global-shield-status">Shield: Armed</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- ================= VIEW 1: QUESTION STUDIO (ADMIN) ================= -->
+      <section id="view-studio" class="view-panel active">
+        
+        <!-- Question Bank Selector & Toolbar -->
+        <div class="question-bank-bar">
+          <label style="font-size:0.8rem; font-weight:600; color:#38bdf8; display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Question Catalog:
+          </label>
+          <select id="studio-question-selector" class="q-select-dropdown">
+            <option value="1">Question 1: Two Sum & Target Index Hash [Coding • Easy • 20 pts]</option>
+            <option value="2">Question 2: Topological Course Schedule & Cycle Detection [Coding • Medium • 30 pts]</option>
+            <option value="3" selected>Question 3: Zero-Knowledge SNARK Proof Constraint System [MCQ • Hard • 25 pts]</option>
+            <option value="4">Question 4: Timing Attack Mitigation in Constant-Time MAC [Descriptive • Medium • 25 pts]</option>
+          </select>
+          <button type="button" class="btn btn-sm btn-outline" id="btn-new-question">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Question
+          </button>
+          <button type="button" class="btn btn-sm btn-outline" id="btn-duplicate-question">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Duplicate
+          </button>
+        </div>
+
+        <div class="studio-grid">
+          
+          <!-- Left Column: Question Input & Configuration -->
+          <div class="panel-card config-panel">
+            <div class="card-header">
+              <div class="icon-bubble">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              </div>
+              <div>
+                <h2>1. Question Formulation & Security</h2>
+                <p class="card-caption">Manage coding, multiple-choice, and descriptive questions with private evaluation test cases.</p>
+              </div>
+            </div>
+
+            <form id="question-form" class="form-layout" onsubmit="event.preventDefault();">
+              
+              <div class="grid-two-col">
+                <div class="form-group">
+                  <label for="q-type">Question Type</label>
+                  <select id="q-type" class="input-control">
+                    <option value="coding">Coding Problem (Monaco Editor)</option>
+                    <option value="mcq" selected>Multiple Choice (MCQ)</option>
+                    <option value="descriptive">Descriptive / Essay</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="q-difficulty">Difficulty</label>
+                  <select id="q-difficulty" class="input-control">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard" selected>Hard</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid-two-col">
+                <div class="form-group">
+                  <label for="q-subject">Subject / Course Module</label>
+                  <input type="text" id="q-subject" class="input-control" value="CS 401: Advanced Cryptography & Distributed Systems" placeholder="e.g. Bio 101, Math 302">
+                </div>
+                <div class="form-group">
+                  <label for="q-module">Module / Topic</label>
+                  <input type="text" id="q-module" class="input-control" value="Module 3: Zero Knowledge Proofs">
+                </div>
+              </div>
+
+              <div class="grid-two-col">
+                <div class="form-group">
+                  <label for="q-marks">Marks / Points</label>
+                  <input type="number" id="q-marks" class="input-control" value="25" min="1" max="100">
+                </div>
+                <div class="form-group">
+                  <label for="q-negative-marks">Negative Marks (Penalty)</label>
+                  <input type="number" id="q-negative-marks" class="input-control" value="5" min="0" max="50">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="q-title">Question Prompt / Title</label>
+                <input type="text" id="q-title" class="input-control" value="Zero-Knowledge SNARK Proof Witness Constraint System" placeholder="Enter question heading...">
+              </div>
+
+              <div class="form-group">
+                <label for="q-body">Problem Statement (Supports Markdown & Code)</label>
+                <textarea id="q-body" class="textarea-control" rows="5" placeholder="Type the question content here...">Given an arithmetic circuit over a finite field Fp, compute the QAP (Quadratic Arithmetic Program) polynomial constraint system. 
+
+Specifically, explain why the prover cannot forge a witness polynomial without knowing the secret assignment vector w, and how the trusted setup toxic waste (tau) is nullified using powers of tau ceremonies.</textarea>
+              </div>
+
+              <!-- MCQ Options Container (Visible if type is mcq) -->
+              <div class="form-group" id="mcq-options-builder-group">
+                <label>Multiple Choice Options & Correct Answer Selection</label>
+                <div class="options-builder" id="options-container">
+                  <div class="option-row">
+                    <input type="radio" name="correct-opt-radio" checked title="Mark as Correct Answer">
+                    <span class="option-label">A</span>
+                    <input type="text" class="input-control opt-input" value="The Schwartz-Zippel lemma bounds the probability of random evaluation collisions to negligible levels.">
+                  </div>
+                  <div class="option-row">
+                    <input type="radio" name="correct-opt-radio" title="Mark as Correct Answer">
+                    <span class="option-label">B</span>
+                    <input type="text" class="input-control opt-input" value="By encrypting the polynomial evaluation inside an RSA accumulator.">
+                  </div>
+                  <div class="option-row">
+                    <input type="radio" name="correct-opt-radio" title="Mark as Correct Answer">
+                    <span class="option-label">C</span>
+                    <input type="text" class="input-control opt-input" value="Via symmetric AES-256 GCM authenticated authentication tags.">
+                  </div>
+                  <div class="option-row">
+                    <input type="radio" name="correct-opt-radio" title="Mark as Correct Answer">
+                    <span class="option-label">D</span>
+                    <input type="text" class="input-control opt-input" value="Using discrete log hardness with bilinear pairing groups G1, G2, GT.">
+                  </div>
+                </div>
+                <small style="color:var(--text-muted); margin-top:4px; display:block;">Select the radio button next to the correct answer. The correct answer is stored securely on the server and is <strong>never transmitted</strong> to student browsers.</small>
+              </div>
+
+              <!-- Coding Test Cases Builder (Visible if type is coding) -->
+              <div class="form-group hidden" id="coding-testcases-builder-group">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label>Public & Private Evaluation Test Cases</label>
+                  <button type="button" class="btn btn-sm btn-outline" id="btn-add-testcase">+ Add Test Case</button>
+                </div>
+                <div id="testcases-list-container" style="display:flex; flex-direction:column; gap:8px;">
+                  <!-- Dynamic test case rows injected here -->
+                </div>
+              </div>
+
+              <!-- Watermark Personalization Settings -->
+              <div class="card-header subsection-header">
+                <div class="icon-bubble secondary">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <div>
+                  <h3>2. Watermark Personalization</h3>
+                  <p class="card-caption">Target candidate metadata embedded across the test surface</p>
+                </div>
+              </div>
+
+              <div class="grid-two-col">
+                <div class="form-group">
+                  <label for="wm-student-name">Candidate Name</label>
+                  <input type="text" id="wm-student-name" class="input-control" value="Sarah Jenkins">
+                </div>
+                <div class="form-group">
+                  <label for="wm-student-id">Candidate ID / Roll No</label>
+                  <input type="text" id="wm-student-id" class="input-control" value="MIT-2026-CS8891">
+                </div>
+              </div>
+
+              <div class="grid-two-col">
+                <div class="form-group">
+                  <label for="wm-exam-id">Exam Reference Code</label>
+                  <input type="text" id="wm-exam-id" class="input-control" value="EXAM-FINAL-OCT26">
+                </div>
+                <div class="form-group">
+                  <label for="wm-ip-address">Candidate IP / Machine Fingerprint</label>
+                  <input type="text" id="wm-ip-address" class="input-control" value="192.168.1.142 (MacBook-M3-Pro)">
+                </div>
+              </div>
+
+              <!-- Watermark Rendering Mode -->
+              <div class="form-group">
+                <label>Watermark Layering Strategy</label>
+                <div class="segmented-control">
+                  <label class="segment-option">
+                    <input type="radio" name="wm-strategy" value="canvas-bake" checked>
+                    <span class="segment-btn">
+                      <strong>Canvas Baked (Recommended)</strong>
+                      <small>Text & watermark rendered into HTML5 canvas pixels. No DOM text nodes to inspect.</small>
+                    </span>
+                  </label>
+                  <label class="segment-option">
+                    <input type="radio" name="wm-strategy" value="tiled-overlay">
+                    <span class="segment-btn">
+                      <strong>Dual-Layer Forensic Tile</strong>
+                      <small>High-density repeating translucent tile over DOM + anti-tamper observer.</small>
+                    </span>
+                  </label>
+                  <label class="segment-option">
+                    <input type="radio" name="wm-strategy" value="steganographic-dots">
+                    <span class="segment-btn">
+                      <strong>Subtle Micro-Dot Steganography</strong>
+                      <small>Near-invisible tracking pattern + visible background warning stamp.</small>
+                    </span>
+                  </label>
+                  <label class="segment-option">
+                    <input type="radio" name="wm-strategy" value="hold-to-reveal">
+                    <span class="segment-btn">
+                      <strong>Hold-to-Reveal (Zero-Exposure Blackout)</strong>
+                      <small>Screen is 100% BLACK by default. Visible only while holding Spacebar/Mouse.</small>
+                    </span>
+                  </label>
+                  <label class="segment-option">
+                    <input type="radio" name="wm-strategy" value="spotlight-mask">
+                    <span class="segment-btn">
+                      <strong>Dynamic Spotlight Mask</strong>
+                      <small>Rest of question is pitch black; only illuminates small radius directly under cursor.</small>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Watermark Styling Sliders -->
+              <div class="form-group">
+                <div class="slider-header">
+                  <label for="wm-opacity">Watermark Opacity: <span id="wm-opacity-val">0.18</span></label>
+                </div>
+                <input type="range" id="wm-opacity" min="0.05" max="0.60" step="0.01" value="0.18" class="range-control">
+              </div>
+
+              <div class="form-group">
+                <div class="slider-header">
+                  <label for="wm-angle">Rotation Angle: <span id="wm-angle-val">-28°</span></label>
+                </div>
+                <input type="range" id="wm-angle" min="-60" max="60" step="1" value="-28" class="range-control">
+              </div>
+
+              <div class="action-buttons">
+                <button type="button" class="btn btn-primary" id="btn-save-question-db">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Save / Publish Question
+                </button>
+                <button type="button" class="btn btn-accent" id="btn-launch-exam">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Launch Student Exam Mode
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+          <!-- Right Column: Live Watermark Preview & Inspector -->
+          <div class="panel-card preview-panel">
+            <div class="card-header">
+              <div class="icon-bubble preview">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <div>
+                <h2>Live Watermark Output Preview</h2>
+                <p class="card-caption">Real-time composite preview of question content and forensic watermarks.</p>
+              </div>
+            </div>
+
+            <!-- Preview Canvas / Container -->
+            <div class="preview-stage-container">
+              <div class="stage-toolbar">
+                <span class="stage-tag">OUTPUT MODE: <span id="preview-mode-tag">CANVAS BAKED</span></span>
+                <span class="stage-time" id="preview-clock">10:49:48 UTC</span>
+                <button class="stage-action-btn" id="btn-download-preview" title="Export Watermarked Sample">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export Sample
+                </button>
+              </div>
+
+              <!-- Live Interactive Preview Canvas Frame -->
+              <div id="live-preview-viewport" class="preview-viewport">
+                <!-- Targeted Question Shield (Only covers question canvas) -->
+                <div id="studio-targeted-shield" class="targeted-question-shield hidden">
+                  <div class="targeted-shield-icon">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#f43f5e" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      <path d="M12 8v4M12 16h.01"/>
+                    </svg>
+                  </div>
+                  <h4>QUESTION OBSCURED (ANTI-CAPTURE)</h4>
+                  <p id="studio-shield-reason">Screen capture shortcut or window switch detected. Question content is blacked out.</p>
+                  <button class="btn btn-primary btn-sm" id="btn-unlock-studio" style="margin-top: 6px;">Click to Unlock Preview</button>
+                  <small>Capture protection active</small>
+                </div>
+
+                <!-- Canvas Mode: -->
+                <canvas id="preview-canvas" class="live-canvas"></canvas>
+                <!-- DOM Mode: -->
+                <div id="preview-dom-wrapper" class="dom-protected-wrapper hidden">
+                  <div id="preview-dom-content" class="dom-content"></div>
+                  <div id="preview-dom-watermark" class="dom-watermark-overlay"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Forensic Signature Summary -->
+            <div class="forensic-card">
+              <div class="forensic-header">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Embedded Forensic Trace Payload</span>
+              </div>
+              <div class="forensic-payload" id="forensic-payload-display">
+                <code>Candidate: Sarah Jenkins | ID: MIT-2026-CS8891 | IP: 192.168.1.142 | Session: 9F8A2C1D • Stamp: 2026-10-23T10:49:48Z</code>
+              </div>
+              <p class="forensic-note">
+                <strong>Why this protects you:</strong> If a test taker attempts to take a screenshot or takes a physical photo of their screen using a smartphone, the repeating forensic pattern binds the image to their exact identity.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- ================= VIEW 2: LEETCODE-STYLE STUDENT EXAM ENVIRONMENT ================= -->
+      <section id="view-exam" class="view-panel">
+        
+        <!-- Active Proctoring HUD Bar -->
+        <div class="exam-hud">
+          <div class="hud-left">
+            <span class="hud-badge pulse">
+              <span class="hud-indicator-dot"></span>
+              PROCTORING ACTIVE
+            </span>
+            <span class="hud-timer">Time Remaining: <strong id="exam-timer">44:59</strong></span>
+            <span class="hud-candidate" id="hud-candidate-info">Candidate: Sarah Jenkins (MIT-2026-CS8891)</span>
+          </div>
+
+          <div class="hud-right">
+            <div class="hud-stat">
+              <span class="stat-label">Violations:</span>
+              <span class="stat-value danger" id="violation-count">0</span>
+            </div>
+            <span class="hud-stat" style="color:#34d399; font-size:0.75rem; display:flex; align-items:center; gap:4px;" id="socket-status-badge">
+              <span style="width:7px; height:7px; border-radius:50%; background:#10b981;"></span>
+              Socket: Online
+            </span>
+            <button class="btn btn-sm btn-outline" id="btn-simulate-snipping">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Simulate Snipping Tool / Alt-Tab
+            </button>
+            <button class="btn btn-sm btn-outline" id="btn-simulate-printscreen">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Simulate PrintScreen Key
+            </button>
+            <button class="btn btn-sm btn-primary" id="btn-submit-exam-hud">
+              Submit Examination
+            </button>
+          </div>
+        </div>
+
+        <!-- LeetCode-Style Dual-Pane Examination Workspace -->
+        <div class="leetcode-workspace-grid">
+          
+          <!-- LEFT PANE: Question Navigation Palette & Problem Description -->
+          <div class="leetcode-left-pane">
+            
+            <!-- Question Navigation Bar -->
+            <div class="q-nav-palette" id="exam-q-nav-palette">
+              <button class="q-nav-btn active" data-q-idx="0">Q1: Two Sum</button>
+              <button class="q-nav-btn" data-q-idx="1">Q2: Course Schedule</button>
+              <button class="q-nav-btn" data-q-idx="2">Q3: ZK-SNARK</button>
+              <button class="q-nav-btn" data-q-idx="3">Q4: Timing Attack</button>
+            </div>
+
+            <!-- Targeted Question Obscurity Shield (covers problem statement & code upon violation) -->
+            <div id="student-targeted-shield" class="targeted-question-shield hidden">
+              <div class="targeted-shield-icon">
+                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#f43f5e" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="M12 8v4M12 16h.01"/>
+                </svg>
+              </div>
+              <h4>QUESTION LOCKED (SCREENSHOT DETECTED)</h4>
+              <p id="shield-reason-text">Screen capture shortcut or window switch was intercepted. Question content is blacked out.</p>
+              <button class="btn btn-primary btn-sm" id="btn-unlock-question" style="margin-top: 6px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Click to Unlock Question
+              </button>
+              <small class="shield-hint">Violation logged with timestamp • Exam timer running</small>
+            </div>
+
+            <!-- Question Description Scroll Container -->
+            <div class="q-desc-scrollable unselectable" id="student-q-desc-container">
+              <div class="q-desc-header">
+                <h2 class="q-desc-title" id="student-q-title">Two Sum & Target Index Hash</h2>
+                <div class="q-meta-badges">
+                  <span class="badge-tag easy" id="student-q-diff">EASY</span>
+                  <span class="badge-tag coding" id="student-q-type">CODING</span>
+                  <span style="font-size:0.75rem; color:var(--text-secondary);" id="student-q-points">20 Points</span>
+                </div>
+              </div>
+
+              <div class="q-markdown-body" id="student-q-body">
+                <p>Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to <code>target</code>.</p>
+                <p>You may assume that each input would have exactly one solution, and you may not use the same element twice.</p>
+                
+                <h4>Example 1:</h4>
+                <div class="example-card">
+                  <strong>Input:</strong> nums = [2, 7, 11, 15], target = 9<br>
+                  <strong>Output:</strong> [0, 1]<br>
+                  <strong>Explanation:</strong> Because nums[0] + nums[1] == 9, we return [0, 1].
+                </div>
+
+                <h4>Constraints:</h4>
+                <ul class="constraints-list">
+                  <li><code>2 &lt;= nums.length &lt;= 10^4</code></li>
+                  <li><code>-10^9 &lt;= nums[i] &lt;= 10^9</code></li>
+                  <li><code>-10^9 &lt;= target &lt;= 10^9</code></li>
+                  <li>Only one valid answer exists.</li>
+                </ul>
+              </div>
+
+              <!-- Dynamic Watermark Canvas Tile Layer for Question Text -->
+              <canvas id="student-exam-canvas" class="exam-canvas" style="display:none;"></canvas>
+            </div>
+
+            <!-- Footer Save Indicator -->
+            <div style="padding:10px 16px; background:rgba(0,0,0,0.3); border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
+              <span id="exam-autosave-status">✔ Draft auto-saved locally</span>
+              <span>OPSWAT ASC Protected</span>
+            </div>
+
+          </div>
+
+          <!-- RIGHT PANE: Monaco Code Editor & Test Case Runner Workspace -->
+          <div class="leetcode-center-pane" id="student-workspace-pane">
+            
+            <!-- Coding Workspace Mode -->
+            <div id="coding-workspace-wrapper" style="display:flex; flex-direction:column; height:100%;">
+              
+              <!-- Editor Toolbar -->
+              <div class="editor-toolbar">
+                <div class="editor-toolbar-left">
+                  <select id="editor-lang-select" class="editor-select">
+                    <option value="javascript">JavaScript (ES2024)</option>
+                    <option value="python">Python 3.11</option>
+                    <option value="cpp">C++ (GCC 13)</option>
+                    <option value="java">Java 21</option>
+                  </select>
+                  <select id="editor-theme-select" class="editor-select">
+                    <option value="vs-dark">Dark Theme</option>
+                    <option value="hc-black">High Contrast</option>
+                  </select>
+                  <button type="button" class="btn-icon-xs" id="btn-reset-code" title="Reset to starter template">
+                    Reset
+                  </button>
+                </div>
+
+                <div class="editor-toolbar-right">
+                  <button type="button" class="btn btn-sm btn-outline" id="btn-run-tests">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Run Code
+                  </button>
+                  <button type="button" class="btn btn-sm btn-primary" id="btn-submit-solution">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Submit
+                  </button>
+                </div>
+              </div>
+
+              <!-- Monaco Editor Host Frame -->
+              <div class="monaco-host-wrapper">
+                <div id="monaco-editor-container"></div>
+                <textarea id="code-fallback-editor" class="code-fallback-editor hidden"></textarea>
+                
+                <!-- Dynamic Overlay Watermark across Code Editor -->
+                <div id="editor-watermark-overlay" class="dom-watermark-overlay" style="pointer-events:none; opacity:0.14;"></div>
+              </div>
+
+              <!-- Test Case Runner Drawer -->
+              <div class="test-runner-drawer">
+                <div class="test-drawer-header">
+                  <div class="test-tabs" id="testcase-tab-bar">
+                    <button class="test-tab-btn active" data-tc-idx="0">Case 1</button>
+                    <button class="test-tab-btn" data-tc-idx="1">Case 2</button>
+                    <button class="test-tab-btn" data-tc-idx="2">Case 3</button>
+                    <button class="test-tab-btn" data-tc-idx="custom">+ Custom</button>
+                    <button class="test-tab-btn" data-tc-idx="results" id="tab-test-results">Run Results</button>
+                  </div>
+                  <span id="test-exec-time" style="font-size:0.72rem; color:var(--text-muted); font-family:var(--font-mono);"></span>
+                </div>
+
+                <div class="test-drawer-body" id="testcase-drawer-body">
+                  <div class="test-param-label">nums =</div>
+                  <div class="test-param-box">[2, 7, 11, 15]</div>
+                  <div class="test-param-label">target =</div>
+                  <div class="test-param-box">9</div>
+                  <div class="test-param-label">Expected Output:</div>
+                  <div class="test-param-box" style="color:#38bdf8;">[0, 1]</div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- MCQ Workspace Mode (Shown when question type is MCQ) -->
+            <div id="mcq-workspace-wrapper" class="mcq-workspace-container hidden">
+              <h3 style="color:#ffffff; font-size:1.1rem; margin-bottom:12px;">Select the Correct Statement:</h3>
+              <div id="student-mcq-options-container" style="display:flex; flex-direction:column; gap:10px;">
+                <!-- Dynamically rendered choice cards -->
+              </div>
+            </div>
+
+            <!-- Descriptive Workspace Mode (Shown when question type is Descriptive) -->
+            <div id="descriptive-workspace-wrapper" class="descriptive-workspace-container hidden">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="color:#ffffff; font-size:1.1rem;">Your Comprehensive Technical Answer:</h3>
+                <span id="descriptive-word-count" style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">Word Count: 0</span>
+              </div>
+              <textarea id="descriptive-answer-input" class="descriptive-textarea" placeholder="Provide your detailed explanation, analysis, and code implementations here..."></textarea>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ================= VIEW 3: INVIGILATOR / REVIEWER MONITOR ================= -->
+      <section id="view-invigilator" class="view-panel">
+        <div class="tracer-container">
+          
+          <div class="tracer-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h2>Invigilator & Reviewer Command Center</h2>
+              <p>Real-time candidate telemetry, live violation monitoring, and remote session action controls.</p>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <span class="hud-badge pulse" style="background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3);">
+                <span class="hud-indicator-dot"></span>
+                SOCKET STREAM: CONNECTED
+              </span>
+            </div>
+          </div>
+
+          <div class="invigilator-grid">
+            
+            <!-- Left: Candidate Roster Table -->
+            <div class="candidate-roster-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="color:#ffffff; font-size:1.05rem;">Active Candidate Roster (CS 401 Final)</h3>
+                <button class="btn btn-sm btn-outline" id="btn-refresh-roster">Refresh Roster</button>
+              </div>
+
+              <div class="table-responsive">
+                <table class="candidate-table">
+                  <thead>
+                    <tr>
+                      <th>Candidate Name</th>
+                      <th>Student ID</th>
+                      <th>IP Address</th>
+                      <th>Session Hash</th>
+                      <th>Violations</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="candidate-roster-tbody">
+                    <tr>
+                      <td><strong>Sarah Jenkins</strong></td>
+                      <td>MIT-2026-CS8891</td>
+                      <td><code>192.168.1.142</code></td>
+                      <td><code>9F8A2C1D</code></td>
+                      <td><span class="stat-value danger">2</span></td>
+                      <td><span class="status-badge-pill active">In Progress</span></td>
+                      <td>
+                        <div class="action-btn-group">
+                          <button class="btn-icon-xs btn-warn-candidate" data-name="Sarah Jenkins">Warn</button>
+                          <button class="btn-icon-xs danger btn-lock-candidate" data-name="Sarah Jenkins">Lock</button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>Alex Rivera</strong></td>
+                      <td>MIT-2026-CS8892</td>
+                      <td><code>192.168.1.189</code></td>
+                      <td><code>7B3E91A4</code></td>
+                      <td><span class="stat-value" style="color:#34d399;">0</span></td>
+                      <td><span class="status-badge-pill active">In Progress</span></td>
+                      <td>
+                        <div class="action-btn-group">
+                          <button class="btn-icon-xs btn-warn-candidate" data-name="Alex Rivera">Warn</button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>David Chen</strong></td>
+                      <td>MIT-2026-CS8893</td>
+                      <td><code>10.0.4.55</code></td>
+                      <td><code>4C82D7F0</code></td>
+                      <td><span class="stat-value danger">1</span></td>
+                      <td><span class="status-badge-pill active">In Progress</span></td>
+                      <td>
+                        <div class="action-btn-group">
+                          <button class="btn-icon-xs btn-warn-candidate" data-name="David Chen">Warn</button>
+                          <button class="btn-icon-xs danger btn-lock-candidate" data-name="David Chen">Lock</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right: Real-time Live Telemetry Feed -->
+            <div class="exam-sidebar-card">
+              <div class="sidebar-header">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f43f5e" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <h3>Live Proctor Telemetry Stream</h3>
+              </div>
+              <p class="sidebar-desc">Instant socket feed of focus changes, keystroke traps, DevTools shortcuts, and element mutations.</p>
+
+              <div class="audit-log-stream" id="invigilator-log-stream" style="max-height: 480px;">
+                <div class="audit-log-entry danger">
+                  <span class="log-time">10:48:12</span>
+                  <span class="log-msg"><strong>Sarah Jenkins:</strong> PrintScreen Key Intercepted (KeyCode 44). Clipboard purged.</span>
+                </div>
+                <div class="audit-log-entry warning">
+                  <span class="log-time">10:42:04</span>
+                  <span class="log-msg"><strong>Sarah Jenkins:</strong> Focus lost: External tool or Snipping Tool detected. Question obscured.</span>
+                </div>
+                <div class="audit-log-entry warning">
+                  <span class="log-time">10:35:19</span>
+                  <span class="log-msg"><strong>David Chen:</strong> Window minimized / tab visibility hidden.</span>
+                </div>
+                <div class="audit-log-entry success">
+                  <span class="log-time">10:30:00</span>
+                  <span class="log-msg">Session EXAM-FINAL-OCT26 armed with Canvas-Bake policy.</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= VIEW 4: FORENSIC LEAK TRACER ================= -->
+      <section id="view-tracer" class="view-panel">
+        <div class="tracer-container">
+          <div class="tracer-header">
+            <h2>Forensic Leak Investigation Laboratory</h2>
+            <p>Automated watermark extraction and database matching: trace unauthorized screen captures and external smartphone photos to the culprit student.</p>
+          </div>
+
+          <div class="tracer-grid">
+            <div class="tracer-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3>1. Simulated Leak Capture</h3>
+                <div class="test-tabs">
+                  <button class="test-tab-btn active" id="btn-leak-phone">Phone Camera</button>
+                  <button class="test-tab-btn" id="btn-leak-screenshot">Raw Screenshot</button>
+                  <button class="test-tab-btn" id="btn-leak-glare">High Glare</button>
+                </div>
+              </div>
+              <p>Below is a leaked exam snapshot. Even when captured with a smartphone or cropped, the embedded forensic matrix persists across pixel frequencies.</p>
+              
+              <div class="simulated-leak-photo">
+                <canvas id="tracer-sample-canvas" width="600" height="380"></canvas>
+                <div class="photo-glare"></div>
+              </div>
+
+              <!-- Filter Selector Buttons -->
+              <div style="display:flex; gap:8px; margin: 12px 0;">
+                <button class="btn btn-sm btn-outline active" id="filter-btn-raw">Raw Photo</button>
+                <button class="btn btn-sm btn-outline" id="filter-btn-contrast">High Contrast</button>
+                <button class="btn btn-sm btn-outline" id="filter-btn-invert">Invert Monocle</button>
+                <button class="btn btn-sm btn-outline" id="filter-btn-dots">Stego Noise</button>
+              </div>
+
+              <div class="tracer-actions">
+                <button class="btn btn-primary" id="btn-run-forensic-scan">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  Scan & Match Against Candidate Database
+                </button>
+              </div>
+            </div>
+
+            <div class="tracer-card">
+              <h3>2. Decoded Forensic Intelligence & Verification</h3>
+              <p>Automated cross-referencing against the active examination registry identifies the exact culprit candidate.</p>
+
+              <div id="tracer-results-box" class="tracer-results empty">
+                <div class="empty-state-notice">
+                  <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                  <p>Click "Scan & Match Against Candidate Database" to analyze the leaked question sample.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= VIEW 5: MYTH VS REALITY ================= -->
+      <section id="view-architecture" class="view-panel">
+        <div class="faq-container">
+          
+          <div class="faq-hero">
+            <div class="myth-badge">TECHNICAL ANALYSIS</div>
+            <h2>The "Transparent Div Watermark Screenshot Myth" Explained</h2>
+            <p>Understanding why standard web pages cannot command the OS to black out screenshots, and what browser-based proctoring actually does instead.</p>
+          </div>
+
+          <div class="comparison-grid">
+            
+            <div class="compare-card myth">
+              <div class="card-badge red">THE POPULAR MYTH</div>
+              <h3>"A transparent CSS div with a watermark can make screenshots render black."</h3>
+              <p class="summary">
+                A common rumor on forums suggests that placing a <code>&lt;div style="width:100%; height:100%"&gt;</code> with a transparent watermark will cause screenshot utilities to produce a solid black image.
+              </p>
+              <ul class="point-list">
+                <li><strong>Operating System Reality:</strong> Screenshots (like Windows Snipping Tool or macOS Cmd+Shift+3) grab raw pixels from the OS display framebuffer or GPU compositor. They capture whatever is visible on the screen.</li>
+                <li><strong>No CSS Magic:</strong> CSS and HTML run inside a sandboxed browser process. CSS has no driver-level API to command the desktop operating system to discard framebuffer pixels.</li>
+                <li><strong>Inspect Element:</strong> Any plain DOM element can be deleted in 2 seconds using Chrome DevTools (F12) or browser extensions.</li>
+              </ul>
+            </div>
+
+            <div class="compare-card reality">
+              <div class="card-badge green">WHY VIDEO STREAMING TURNS BLACK</div>
+              <h3>"Why does Netflix or Disney+ screenshot to black?"</h3>
+              <p class="summary">
+                Streaming platforms turn black due to <strong>Hardware DRM (Widevine / FairPlay)</strong>, not CSS!
+              </p>
+              <ul class="point-list">
+                <li><strong>Encrypted Media Extensions (EME):</strong> Video streams are encrypted end-to-end. Decryption keys are managed by a secure Trusted Execution Environment (TEE).</li>
+                <li><strong>Protected Video Path (HDCP):</strong> Decrypted video frames go straight to the GPU display hardware overlay, bypassing the operating system's normal software compositor.</li>
+                <li><strong>DOM Limitation:</strong> Widevine only supports audio/video codecs. It <strong>cannot</strong> be applied to general HTML DOM nodes, text, or questions.</li>
+              </ul>
+            </div>
+
+          </div>
+
+          <!-- Real World Multi-Layer Defense Table -->
+          <div class="defense-table-card">
+            <h3>How High-Stakes Web Exams Actually Prevent Leaks & Screenshots</h3>
+            <p>Because no pure web page can prevent 100% of external hardware captures (like a phone camera), modern platforms use <strong>Defense-in-Depth</strong>:</p>
+
+            <div class="table-responsive">
+              <table class="defense-table">
+                <thead>
+                  <tr>
+                    <th>Defense Vector</th>
+                    <th>Mechanism in Browser</th>
+                    <th>Effect on Attacker</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>1. Focus-Loss Blackout</strong></td>
+                    <td><code>window.onblur</code> & <code>document.visibilitychange</code></td>
+                    <td>When user presses <code>Win+Shift+S</code>, macOS capture tool, or Alt-Tabs, browser loses focus for 1ms and instantly renders solid black.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>2. PrintScreen Hijacking</strong></td>
+                    <td><code>keydown</code> event listener on <code>PrintScreen</code> (Keycode 44)</td>
+                    <td>Intercepts keypress, overwrites clipboard buffer with blank/warning text, triggers alert.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>3. Forensic Watermarking</strong></td>
+                    <td>Tiled dynamic overlay with Candidate Name, ID, IP & timestamp</td>
+                    <td>Even if photographed with a physical phone camera, the leak directly identifies who did it.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>4. Canvas Pixel Baking</strong></td>
+                    <td>Text rendered onto HTML5 <code>&lt;canvas&gt;</code> instead of HTML DOM</td>
+                    <td>Attacker cannot inspect or copy text nodes; right-click "Save Image" is blocked.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>5. DOM Mutation Watchdog</strong></td>
+                    <td><code>MutationObserver</code> API watching protected nodes</td>
+                    <td>If a student deletes watermark layers using Inspect Element, the test immediately locks and aborts.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>6. Anti-Print Stylesheet</strong></td>
+                    <td><code>@media print { body { display:none } }</code></td>
+                    <td>Attempts to "Print to PDF" or send to printer produce 100% black pages.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Global Violation Toast Notification -->
+    <div id="violation-toast" class="toast hidden">
+      <div class="toast-icon">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="toast-content">
+        <strong id="toast-title">Security Violation</strong>
+        <p id="toast-message">Unauthorized shortcut intercepted.</p>
+      </div>
+    </div>
+
+    <!-- Invigilator Warning Modal (Pushed directly to student screen) -->
+    <div id="invigilator-warning-modal" class="aegis-modal-backdrop hidden">
+      <div class="aegis-modal-card">
+        <div class="aegis-modal-header" style="background:rgba(244,63,94,0.15);">
+          <strong style="color:#fb7185; display:flex; align-items:center; gap:8px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            OFFICIAL PROCTOR INTEGRITY NOTICE
+          </strong>
+        </div>
+        <div class="aegis-modal-body">
+          <p id="invigilator-modal-msg" style="font-size:0.92rem; color:#e2e8f0; line-height:1.6; margin-bottom:12px;">
+            The exam invigilator has flagged repeated focus changes or screenshot shortcut attempts on your session. Further violations will result in immediate disqualification.
+          </p>
+          <div style="background:#090e18; padding:10px 14px; border-radius:6px; font-family:var(--font-mono); font-size:0.75rem; color:#94a3b8;">
+            Candidate: <span id="modal-candidate-name">Sarah Jenkins</span> | Session: <span id="modal-session-hash">9F8A2C1D</span>
+          </div>
+        </div>
+        <div class="aegis-modal-footer">
+          <button class="btn btn-primary btn-sm" id="btn-ack-warning">I Acknowledge & Understand</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Exam Confirmation Modal -->
+    <div id="exam-submit-modal" class="aegis-modal-backdrop hidden">
+      <div class="aegis-modal-card">
+        <div class="aegis-modal-header">
+          <strong style="color:#ffffff;">Finalize & Submit Examination</strong>
+        </div>
+        <div class="aegis-modal-body" id="submit-modal-body">
+          <p style="margin-bottom:14px; color:#cbd5e1;">Are you sure you want to finalize your submission? All answers, code solutions, and proctoring telemetry will be submitted for grading.</p>
+          <div style="background:#090e18; border:1px solid var(--border-subtle); border-radius:6px; padding:12px; font-size:0.8rem;">
+            <div>• Questions Completed: <strong style="color:#34d399;" id="modal-completed-count">3 of 4</strong></div>
+            <div>• Remaining Time: <strong id="modal-time-left">44:59</strong></div>
+            <div>• Logged Violations: <strong style="color:#f87171;" id="modal-violation-count">2</strong></div>
+          </div>
+        </div>
+        <div class="aegis-modal-footer">
+          <button class="btn btn-sm btn-outline" id="btn-cancel-submit">Return to Exam</button>
+          <button class="btn btn-sm btn-primary" id="btn-confirm-submit">Confirm Submission</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

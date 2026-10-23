@@ -1,0 +1,9 @@
+node_modules/
+data/*.sqlite
+data/*.sqlite-journal
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.DS_Store
+Thumbs.db

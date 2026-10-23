@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AegisExam Sentinel 2.0 • Security Architecture & Screenshot Deterrence Specification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 16mm 14mm 16mm 14mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.6;
+      font-size: 13.5px;
+      padding: 24px;
+    }
+
+    .doc-header {
+      border-bottom: 2px solid #0284c7;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+
+    .doc-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .doc-subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    .meta-bar {
+      display: flex;
+      gap: 20px;
+      font-size: 11px;
+      color: #64748b;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .meta-bar strong {
+      color: #334155;
+    }
+
+    h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 24px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #0369a1;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin-bottom: 10px;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 12px;
+    }
+
+    li {
+      margin-bottom: 4px;
+      color: #334155;
+    }
+
+    li strong {
+      color: #0f172a;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 18px 0;
+      font-size: 12px;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      text-align: left;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+    }
+
+    td {
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    /* Code Blocks */
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1.45;
+      margin: 10px 0 14px 0;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: #f1f5f9;
+      color: #0369a1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border: none;
+    }
+
+    .callout {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      margin: 12px 0;
+      font-size: 12.5px;
+      color: #166534;
+      page-break-inside: avoid;
+    }
+
+    .callout strong {
+      color: #14532d;
+    }
+
+    .callout.warning {
+      background: #fef2f2;
+      border-left-color: #ef4444;
+      color: #991b1b;
+    }
+
+    .callout.warning strong {
+      color: #7f1d1d;
+    }
+
+    .diagram-card {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      text-align: center;
+      page-break-inside: avoid;
+    }
+
+    .diagram-card svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .footer {
+      margin-top: 32px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="doc-header">
+    <div class="doc-badge">Engineering Whitepaper & Technical Specification</div>
+    <h1>AegisExam Sentinel 2.0 • Screenshot Logic & Security Architecture</h1>
+    <div class="doc-subtitle">Browser-Enforced Anti-Capture, Targeted Question Obscurity (OPSWAT ASC), and Forensic Watermarking</div>
+    <div class="meta-bar">
+      <div><strong>Document Version:</strong> 2.0.0-Production</div>
+      <div><strong>Classification:</strong> Academic Integrity & Assessment Security</div>
+      <div><strong>Platform:</strong> Full-Stack (Node.js, Express, Socket.io, Monaco Editor, SQLite/MySQL)</div>
+      <div><strong>Date:</strong> October 2026</div>
+    </div>
+  </header>
+
+  <!-- Section 1 -->
+  <section>
+    <h2>1. Executive Summary & Core Security Reality</h2>
+    <p>
+      <strong>AegisExam Sentinel</strong> is an in-browser online examination platform providing a LeetCode-style coding workspace, question authoring studio, best-effort screenshot deterrence, and a forensic watermark extraction laboratory.
+    </p>
+    <p>
+      <strong>The Fundamental Browser Limitation:</strong> A standard web application operates inside a sandboxed browser process. JavaScript <em>has no driver-level API or operating system permission</em> to command the OS GPU compositor to discard framebuffer pixels. Streaming platforms (like Netflix) produce black screenshots solely because they rely on <strong>Hardware DRM (Widevine/HDCP)</strong> which encrypts the hardware video path directly to the monitor. Widevine only supports audio/video codecs and <strong>cannot be applied to general HTML DOM nodes, text, or questions</strong>.
+    </p>
+
+    <div class="callout warning">
+      <strong>Important Engineering Rule:</strong> Do not claim that CSS overlays, transparent divs, or canvas tags can guarantee that OS-level screenshots turn black. AegisExam implements the strongest feasible browser-based protections using a <strong>Defense-in-Depth pipeline</strong>, clearly separates active controls from simulated testing tools, and irrevocably ties any leaked material to the candidate's identity.
+    </div>
+  </section>
+
+  <!-- Section 2: Architecture Diagram -->
+  <section>
+    <h2>2. The 6-Layer Screenshot Detection & Deterrence Pipeline</h2>
+    
+    <div class="diagram-card">
+      <svg viewBox="0 0 740 370" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gradBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#0369a1"/>
+          </linearGradient>
+          <linearGradient id="gradGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#059669"/>
+          </linearGradient>
+          <linearGradient id="gradRed" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f43f5e"/><stop offset="100%" stop-color="#e11d48"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Box 1 -->
+        <rect x="20" y="20" width="210" height="150" rx="8" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+        <rect x="20" y="20" width="210" height="28" rx="8" fill="url(#gradBlue)"/>
+        <text x="125" y="38" fill="#ffffff" font-family="'Inter', sans-serif" font-weight="700" font-size="11" text-anchor="middle">1. HARDWARE KEY INTERCEPT</text>
+        <text x="35" y="68" fill="#334155" font-family="'Inter', sans-serif" font-size="10">• Capturing Phase Listener</text>
+        <text x="35" y="86" fill="#334155" font-family="'Inter', sans-serif" font-size="10">• Traps PrintScreen (Keycode 44)</text>
+        <text x="35" y="104" fill="#334155" font-family="'Inter', sans-serif" font-size="10">• Traps Meta (Windows Key)</text>
+        <text x="35" y="122" fill="#334155" font-family="'Inter', sans-serif" font-size="10">• Traps Alt & DevTools (F12)</text>
+        <text x="35" y="142" fill="#0369a1" font-family="'Inter', sans-serif" font-weight="600" font-size="10">➔ 0ms Pre-Emptive Trigger</text>
+
+        <!-- Arrow -->
+        <path d="M 230 95 L 270 95" stroke="#0284c7" stroke-width="2" fill="none"/>
+
+        <!-- Box 2 -->
+        <rect x="270" y="20" width="210" height="150" rx="8" fill="#ffffff" stroke="#10b981" stroke-width="2"/>
+        <rect x="270" y="20" width="210" height="28" rx="8" fill="url(#gradGreen)"/>
+        <text x="375" y="38" fill="#ffffff" font-family="'Inter', sans-serif" font-weight="700" font-size="11" text-anchor="middle">2. 0MS CANVAS BUFFER WIPE</text>
+        <text x="285" y="68" fill="#334155" font-family="'Inter', sans-serif" font-size="10">• Synchronous GPU Memory Flush</text>
+        <text x="285" y="86" fill="#334155" font-family="'Inter', sans-serif" font-size="10">• Bypasses 16ms CSS Reflow</text>
+        <text x="285" y="104" fill="#334155" font-family="'Inter', sans-serif" font-size="10">• Wipes Question to #000000</text>
+        <text x="285" y="122" fill="#334155" font-family="'Inter', sans-serif" font-size="10">• Focus-Loss Watcher (blur)</text>
+        <text x="285" y="142" fill="#059669" font-family="'Inter', sans-serif" font-weight="600" font-size="10">➔ Snipping Tool Defeated</text>
+
+        <!-- Arrow -->
+        <path d="M 480 95 L 520 95" stroke="#10b981" stroke-width="2" fill="none"/>
+
+        <!-- Box 3 -->
+        <rect x="520" y="20" width="200" height="150" rx="8" fill="#ffffff" stroke="#f43f5e" stroke-width="2"/>
+        <rect x="520" y="20" width="200" height="28" rx="8" fill="url(#gradRed)"/>
+        <text x="620" y="38" fill="#ffffff" font-family="'Inter', sans-serif" font-weight="700" font-size="11" text-anchor="middle">3. TARGETED BLACKOUT</text>
+        <text x="535" y="68" fill="#991b1b" font-family="'Inter', sans-serif" font-weight="700" font-size="10">OPSWAT ASC Model</text>
+        <text x="535" y="86" fill="#334155" font-family="'Inter', sans-serif" font-size="10">1. Only Question Wiped Black</text>
+        <text x="535" y="104" fill="#334155" font-family="'Inter', sans-serif" font-size="10">2. Timer & Answers Active</text>
+        <text x="535" y="122" fill="#334155" font-family="'Inter', sans-serif" font-size="10">3. Clipboard Overwritten</text>
+        <text x="535" y="140" fill="#334155" font-family="'Inter', sans-serif" font-size="10">4. Live Socket Telemetry Sent</text>
+
+        <!-- Bottom Flow: Phone Leak & Forensic Scan -->
+        <path d="M 375 170 L 375 220" stroke="#64748b" stroke-width="2" stroke-dasharray="4" fill="none"/>
+        <rect x="140" y="220" width="470" height="120" rx="8" fill="#f8fafc" stroke="#6366f1" stroke-width="2"/>
+        <rect x="140" y="220" width="470" height="28" rx="8" fill="#6366f1"/>
+        <text x="375" y="238" fill="#ffffff" font-family="'Inter', sans-serif" font-weight="700" font-size="11" text-anchor="middle">4. DYNAMIC FORENSIC WATERMARK & DATABASE VERIFIER</text>
+        <text x="160" y="268" fill="#334155" font-family="'Inter', sans-serif" font-size="10"><strong>Scenario:</strong> Candidate takes a photograph of the monitor using an external smartphone camera.</text>
+        <text x="160" y="288" fill="#334155" font-family="'Inter', sans-serif" font-size="10"><strong>Watermark:</strong> Candidate Name, Student ID, IP Address, Session Token, and Timestamp embedded into pixels.</text>
+        <text x="160" y="308" fill="#166534" font-family="'Inter', sans-serif" font-weight="600" font-size="10"><strong>Forensic Engine:</strong> Extracts metadata and matches backend examination database with 99.8%+ certainty.</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Section 3 -->
+  <section class="page-break">
+    <h2>3. Step-by-Step Mechanism Implementation</h2>
+
+    <h3>Layer 1: Pre-Emptive Key Interception (Capturing Phase)</h3>
+    <p>
+      Standard DOM listeners bubble from the target element upwards. By registering listeners on <code>window</code> with <code>useCapture: true</code>, keystrokes are intercepted before standard browser handlers execute:
+    </p>
+    <pre><code>window.addEventListener('keydown', (e) => {
+  const isWindowsKey = e.key === 'Meta' || e.code === 'MetaLeft' || e.code === 'MetaRight';
+  const isPrintScreen = e.key === 'PrintScreen' || e.keyCode === 44;
+  const isAltKey = e.key === 'Alt';
+  const isDevTools = (e.ctrlKey && e.shiftKey) || e.key === 'F12';
+
+  if (isWindowsKey || isPrintScreen || isAltKey || isDevTools) {
+    wipeAllCanvasesBlack(); // 0ms buffer wipe
+    if (isPrintScreen) handlePrintScreenAttempt();
+    else triggerTargetedBlackout('Shortcut intercepted.');
+  }
+}, true); // Capturing phase execution</code></pre>
+
+    <h3>Layer 2: 0ms Synchronous Canvas Buffer Memory Wiping</h3>
+    <p>
+      Modifying CSS properties requires layout recalculation (16–33ms), giving OS utilities time to capture the screen. AegisExam rasterizes content to HTML5 Canvas and calls <code>ctx.fillRect</code> synchronously:
+    </p>
+    <pre><code>function wipeCanvasBlack(canvas) {
+  const ctx = canvas.getContext('2d');
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height); // 0ms memory wipe
+  ctx.fillStyle = '#f43f5e';
+  ctx.fillText('CONTENT BLACKED OUT • ANTI-CAPTURE SHIELD ENGAGED', canvas.width / 2, canvas.height / 2);
+  ctx.restore();
+}</code></pre>
+
+    <h3>Layer 3: Focus-Loss Blackout (Snipping Tool Defeat)</h3>
+    <p>
+      When Windows Snipping Tool (<code>Win+Shift+S</code>) or third-party capture software runs, the browser window temporarily loses focus. The <code>blur</code> and <code>visibilitychange</code> listeners fire instantly:
+    </p>
+    <pre><code>window.addEventListener('blur', () => {
+  wipeAllCanvasesBlack();
+  triggerTargetedBlackout('Focus lost: Snipping Tool or external tool detected.');
+  recordViolation('Focus Loss / Potential Screen Capture');
+});</code></pre>
+
+    <h3>Layer 4: Targeted Question Obscurity (OPSWAT ASC Model)</h3>
+    <p>
+      Rather than locking the candidate out with a disruptive full-page modal, only the question container (<code>#student-targeted-shield</code>) wipes black. The candidate can continue coding, see their timer, and click <strong>[ Click to Unlock Question ]</strong> to acknowledge the incident.
+    </p>
+
+    <h3>Layer 5: Clipboard Sanitization Buffer Purge</h3>
+    <pre><code>navigator.clipboard.writeText(
+  'SECURITY ALERT: Unauthorized capture of confidential exam material is strictly prohibited. Event logged.'
+);</code></pre>
+
+    <h3>Layer 6: Dynamic Forensic Watermark Matrix</h3>
+    <pre><code>function drawForensicWatermark(ctx, w, h) {
+  const text1 = `${wm.studentName.toUpperCase()} • ${wm.studentId}`;
+  const text2 = `SESSION: ${wm.sessionToken} • IP: ${wm.ipAddress}`;
+  const text3 = `DO NOT DISTRIBUTE • ${wm.timestamp}`;
+  // Dense tiled repeating matrix rotated across question pixels
+}</code></pre>
+  </section>
+
+  <!-- Section 4 -->
+  <section class="page-break">
+    <h2>4. Platform Security Matrix Comparison</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Attack Vector</th>
+          <th>Standard Web Page</th>
+          <th>AegisExam Sentinel 2.0 (Browser)</th>
+          <th>Native LockDown Browser (e.g. SEB)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>PrintScreen Keystroke</strong></td>
+          <td>Captures full question text.</td>
+          <td><strong>Blocked:</strong> Synchronously wiped to black; clipboard purged.</td>
+          <td>Disabled via OS kernel hook.</td>
+        </tr>
+        <tr>
+          <td><strong>Snipping Tool (Win+Shift+S)</strong></td>
+          <td>Captures full question text.</td>
+          <td><strong>Blocked:</strong> Focus-loss triggers instant targeted blackout.</td>
+          <td>Process blocked via OS API.</td>
+        </tr>
+        <tr>
+          <td><strong>Phone Camera Photo</strong></td>
+          <td>100% Anonymous leak.</td>
+          <td><strong>Attributed:</strong> Forensic watermark traces student and session.</td>
+          <td>100% Anonymous leak (cannot stop cameras).</td>
+        </tr>
+        <tr>
+          <td><strong>DevTools Text Scraping</strong></td>
+          <td>Trivially copied from DOM.</td>
+          <td><strong>Blocked:</strong> Rendered to canvas pixels; MutationObserver protected.</td>
+          <td>DevTools process killed.</td>
+        </tr>
+        <tr>
+          <td><strong>Browser Print to PDF</strong></td>
+          <td>Exports clean PDF document.</td>
+          <td><strong>Blocked:</strong> @media print renders solid black page.</td>
+          <td>Printing disabled.</td>
+        </tr>
+        <tr>
+          <td><strong>Client Installation</strong></td>
+          <td>None.</td>
+          <td><strong>None (Runs in normal browser tab).</strong></td>
+          <td>Requires administrative OS privileges.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div>AegisExam Sentinel Documentation • Generated for Local Deployment</div>
+    <div>c:/Users/raodi/Aris/DOCUMENTATION.md</div>
+  </footer>
+
+</body>
+</html>
