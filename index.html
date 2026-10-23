@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
 
   <!-- Socket.io Client for Real-Time Proctoring Telemetry -->
   <script src="/socket.io/socket.io.js"></script>
@@ -377,19 +377,8 @@ Specifically, explain why the prover cannot forge a witness polynomial without k
 
               <!-- Live Interactive Preview Canvas Frame -->
               <div id="live-preview-viewport" class="preview-viewport">
-                <!-- Targeted Question Shield (Only covers question canvas) -->
-                <div id="studio-targeted-shield" class="targeted-question-shield hidden">
-                  <div class="targeted-shield-icon">
-                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#f43f5e" stroke-width="2">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                      <path d="M12 8v4M12 16h.01"/>
-                    </svg>
-                  </div>
-                  <h4>QUESTION OBSCURED (ANTI-CAPTURE)</h4>
-                  <p id="studio-shield-reason">Screen capture shortcut or window switch detected. Question content is blacked out.</p>
-                  <button class="btn btn-primary btn-sm" id="btn-unlock-studio" style="margin-top: 6px;">Click to Unlock Preview</button>
-                  <small>Capture protection active</small>
-                </div>
+                <!-- Targeted Question Shield (Pure solid black blackout during capture) -->
+                <div id="studio-targeted-shield" class="targeted-question-shield hidden"></div>
 
                 <!-- Canvas Mode: -->
                 <canvas id="preview-canvas" class="live-canvas"></canvas>
@@ -472,22 +461,8 @@ Specifically, explain why the prover cannot forge a witness polynomial without k
               <button class="q-nav-btn" data-q-idx="3">Q4: Timing Attack</button>
             </div>
 
-            <!-- Targeted Question Obscurity Shield (covers problem statement & code upon violation) -->
-            <div id="student-targeted-shield" class="targeted-question-shield hidden">
-              <div class="targeted-shield-icon">
-                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#f43f5e" stroke-width="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  <path d="M12 8v4M12 16h.01"/>
-                </svg>
-              </div>
-              <h4>QUESTION LOCKED (SCREENSHOT DETECTED)</h4>
-              <p id="shield-reason-text">Screen capture shortcut or window switch was intercepted. Question content is blacked out.</p>
-              <button class="btn btn-primary btn-sm" id="btn-unlock-question" style="margin-top: 6px;">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Click to Unlock Question
-              </button>
-              <small class="shield-hint">Violation logged with timestamp • Exam timer running</small>
-            </div>
+            <!-- Targeted Question Obscurity Shield (Pure solid black blackout during capture) -->
+            <div id="student-targeted-shield" class="targeted-question-shield hidden"></div>
 
             <!-- Question Description Scroll Container -->
             <div class="q-desc-scrollable unselectable" id="student-q-desc-container">
@@ -954,6 +929,6 @@ Specifically, explain why the prover cannot forge a witness polynomial without k
 
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

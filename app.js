@@ -903,129 +903,207 @@ function twoSum(nums, target) {
   });
 
   // ==========================================================================
-  // ACTIVE ANTI-CAPTURE DEFENSES (OPSWAT ASC TARGETED OBSCURITY)
+  // ACTIVE ANTI-CAPTURE DEFENSES (SEAMLESS OPSWAT ASC SILENT BLACKOUT)
   // ==========================================================================
 
-  // 1. FOCUS LOSS & BLUR SHIELD
+  const BLACKOUT_HOLD_MS = 3500; // Hold blackout for 3.5 seconds to guarantee screenshot captures pure pitch black
+  let autoRestoreTimer = null;
+
+  // Pre-emptive Capture Key Detection (intercepts at earliest microtick)
+  function isCaptureKeyEvent(e) {
+    if (e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44) return true;
+    if (e.key === 'Meta' || e.key === 'OS' || e.code === 'MetaLeft' || e.code === 'MetaRight') return true;
+    if (e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight') return true;
+    if (e.shiftKey && (e.metaKey || e.key === 'S' || e.key === 's' || e.code === 'KeyS')) return true;
+    if (e.ctrlKey && e.shiftKey) return true;
+    if (e.key === 'F12' || e.keyCode === 123) return true;
+    if (e.ctrlKey && (e.key === 'p' || e.key === 'P')) return true;
+    return false;
+  }
+
+  function handleCaptureKeydown(e) {
+    if (!isCaptureKeyEvent(e)) return;
+
+    state.holdToRevealActive = false;
+    wipeAllCanvasesBlack();
+
+    const isPrintScreen = e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44;
+    const isWindowsKey = e.key === 'Meta' || e.code === 'MetaLeft' || e.code === 'MetaRight' || e.key === 'OS';
+    const isPrintAction = e.ctrlKey && (e.key === 'p' || e.key === 'P');
+    const isDevTools = (e.ctrlKey && e.shiftKey) || e.key === 'F12' || e.keyCode === 123;
+
+    if (isPrintScreen) {
+      handlePrintScreenAttempt();
+    } else if (isWindowsKey || (e.shiftKey && (e.key === 'S' || e.key === 's'))) {
+      triggerTargetedBlackout('Snipping Tool shortcut sequence', BLACKOUT_HOLD_MS);
+      recordViolation('Snipping Tool Key Sequence Pre-empted');
+    } else if (e.key === 'Alt' || (e.code && e.code.startsWith('Alt'))) {
+      triggerTargetedBlackout('Alt Key window capture sequence', BLACKOUT_HOLD_MS);
+      recordViolation('Alt Key Window Capture Pre-empted');
+    } else if (isDevTools) {
+      e.preventDefault();
+      triggerTargetedBlackout('DevTools shortcut blocked', BLACKOUT_HOLD_MS);
+      recordViolation('DevTools Shortcut Attempt');
+    } else if (isPrintAction) {
+      e.preventDefault();
+      triggerTargetedBlackout('Print shortcut blocked', BLACKOUT_HOLD_MS);
+      recordViolation('Print Action (Ctrl+P) Attempt');
+    }
+  }
+
+  // Attach capturing listener to BOTH window and document for zero-latency key interception
+  window.addEventListener('keydown', handleCaptureKeydown, true);
+  document.addEventListener('keydown', handleCaptureKeydown, true);
+
+  // 1. FOCUS LOSS & BLUR SHIELD (Snipping Tool crosshair, window focus switch)
   window.addEventListener('blur', () => {
     state.holdToRevealActive = false;
     wipeAllCanvasesBlack();
-    triggerTargetedBlackout('Focus lost: Snipping Tool, application switch, or external capture shortcut detected.');
+    // Pre-emptively hold black for at least 3.5s; remains black for entire blur duration
+    triggerTargetedBlackout('Focus loss / Snipping tool active', BLACKOUT_HOLD_MS);
     recordViolation('Focus Loss / Potential Screen Capture');
+  });
+
+  // Auto-restore when window regains focus (user finishes screenshot/returns)
+  window.addEventListener('focus', () => {
+    checkAndRestoreBlackout();
   });
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       state.holdToRevealActive = false;
       wipeAllCanvasesBlack();
-      triggerTargetedBlackout('Tab visibility hidden. Window minimized or switched.');
+      triggerTargetedBlackout('Tab hidden', BLACKOUT_HOLD_MS);
       recordViolation('Tab Hidden / Switch Violation');
+    } else {
+      checkAndRestoreBlackout();
     }
   });
 
   document.addEventListener('mouseleave', () => {
-    state.holdToRevealActive = false;
-    wipeAllCanvasesBlack();
-    triggerTargetedBlackout('Cursor exited examination window boundary.');
-    recordViolation('Cursor Exited Viewport (External Tool Suspected)');
+    if (!document.hasFocus()) {
+      triggerTargetedBlackout('Cursor exited boundary without focus', BLACKOUT_HOLD_MS);
+    }
   });
 
-  // 2. HARDWARE KEYBOARD SHORTCUT INTERCEPTION
-  window.addEventListener('keydown', (e) => {
-    const isWindowsKey = e.key === 'Meta' || e.code === 'MetaLeft' || e.code === 'MetaRight' || e.key === 'OS';
-    const isPrintScreen = e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44;
-    const isAltKey = e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight';
-    const isDevTools = (e.ctrlKey && e.shiftKey) || e.key === 'F12' || e.keyCode === 123;
-    const isPrintAction = e.ctrlKey && (e.key === 'p' || e.key === 'P');
-
-    if (isWindowsKey || isPrintScreen || isAltKey || isDevTools || isPrintAction) {
-      state.holdToRevealActive = false;
-      wipeAllCanvasesBlack();
-
-      if (isPrintScreen) {
-        handlePrintScreenAttempt();
-      } else if (isWindowsKey) {
-        triggerTargetedBlackout('Windows Key (Meta) Intercepted: Snipping Tool sequence blocked.');
-        recordViolation('Windows Key / Snipping Tool Pre-empted');
-      } else if (isAltKey) {
-        triggerTargetedBlackout('Alt Key Intercepted: Window capture shortcut pre-empted.');
-        recordViolation('Alt Key Capture Pre-empted');
-      } else if (isDevTools) {
-        e.preventDefault();
-        triggerTargetedBlackout('DevTools / Inspect Shortcut Blocked.');
-        recordViolation('DevTools Shortcut Attempt');
-      } else if (isPrintAction) {
-        e.preventDefault();
-        triggerTargetedBlackout('Print Action Blocked.');
-        recordViolation('Print Action (Ctrl+P) Attempt');
-      }
-      return;
+  window.addEventListener('mouseenter', () => {
+    if (document.hasFocus()) {
+      checkAndRestoreBlackout();
     }
+  });
 
+  // Space key handler for hold-to-reveal watermark strategy only
+  window.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && state.watermark.strategy === 'hold-to-reveal' && !e.repeat) {
       e.preventDefault();
       state.holdToRevealActive = true;
       renderAllCanvases();
     }
-  }, true);
+  });
 
   window.addEventListener('keyup', (e) => {
-    const isPrintScreen = e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44;
-    if (isPrintScreen) {
-      state.holdToRevealActive = false;
-      wipeAllCanvasesBlack();
-      handlePrintScreenAttempt();
-      return;
-    }
-
     if (e.code === 'Space' && state.watermark.strategy === 'hold-to-reveal') {
       state.holdToRevealActive = false;
       renderAllCanvases();
     }
-  }, true);
+  });
 
   function handlePrintScreenAttempt() {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText('SECURITY ALERT: Unauthorized capture of confidential exam material is strictly prohibited.');
+        navigator.clipboard.writeText('');
       }
     } catch (err) {}
 
     recordViolation('PrintScreen Key Intercepted');
-    triggerTargetedBlackout('PrintScreen key pressed! Question content obscured and clipboard buffer purged.');
-    showToast('Capture Blocked', 'PrintScreen key intercepted. Question locked.');
+    // Pre-emptively blackout for 3.5 seconds
+    triggerTargetedBlackout('PrintScreen pressed', BLACKOUT_HOLD_MS);
   }
 
-  function triggerTargetedBlackout(reason) {
+  // Silent 0ms Blackout: Synchronously blacks out ONLY the question panel with pure #000000
+  function triggerTargetedBlackout(reason, autoRestoreDelayMs = BLACKOUT_HOLD_MS) {
     state.proctoring.isBlackedOut = true;
+    state.proctoring.blackoutUntil = Date.now() + (autoRestoreDelayMs || BLACKOUT_HOLD_MS);
+
+    // Synchronous immediate DOM updates (0ms delay)
+    const leftPane = document.querySelector('.leetcode-left-pane');
+    if (leftPane) leftPane.classList.add('pane-blackout');
+
+    const previewViewport = document.getElementById('live-preview-viewport');
+    if (previewViewport) previewViewport.classList.add('pane-blackout');
+
+    if (studentTargetedShield) {
+      studentTargetedShield.classList.remove('hidden');
+      studentTargetedShield.style.display = 'block';
+    }
+    if (studioTargetedShield) {
+      studioTargetedShield.classList.remove('hidden');
+      studioTargetedShield.style.display = 'block';
+    }
+
     wipeAllCanvasesBlack();
 
-    if (studentTargetedShield) studentTargetedShield.classList.remove('hidden');
-    if (studioTargetedShield) studioTargetedShield.classList.remove('hidden');
+    if (autoRestoreTimer) {
+      clearTimeout(autoRestoreTimer);
+      autoRestoreTimer = null;
+    }
 
-    const shieldReasonText = document.getElementById('shield-reason-text');
-    if (shieldReasonText) shieldReasonText.textContent = reason;
-
-    const studioShieldReason = document.getElementById('studio-shield-reason');
-    if (studioShieldReason) studioShieldReason.textContent = reason;
+    autoRestoreTimer = setTimeout(() => {
+      checkAndRestoreBlackout();
+    }, autoRestoreDelayMs || BLACKOUT_HOLD_MS);
   }
 
-  function restoreQuestionView() {
+  // Seamless Auto-Restore: Restores visible question only after blackout hold expires AND window is focused
+  function checkAndRestoreBlackout() {
+    // If blackout hold time has not elapsed, wait until it completes
+    if (Date.now() < state.proctoring.blackoutUntil) {
+      if (!autoRestoreTimer) {
+        const remaining = state.proctoring.blackoutUntil - Date.now();
+        autoRestoreTimer = setTimeout(() => {
+          checkAndRestoreBlackout();
+        }, Math.max(100, remaining));
+      }
+      return;
+    }
+
+    // If window is currently unfocused / blurred (e.g. Snipping Tool still active), do NOT restore!
+    if (!document.hasFocus() || document.hidden) {
+      return;
+    }
+
     state.proctoring.isBlackedOut = false;
-    if (studentTargetedShield) studentTargetedShield.classList.add('hidden');
-    if (studioTargetedShield) studioTargetedShield.classList.add('hidden');
+    state.proctoring.blackoutUntil = 0;
+
+    if (studentTargetedShield) {
+      studentTargetedShield.classList.add('hidden');
+      studentTargetedShield.style.display = 'none';
+    }
+    if (studioTargetedShield) {
+      studioTargetedShield.classList.add('hidden');
+      studioTargetedShield.style.display = 'none';
+    }
+
+    const leftPane = document.querySelector('.leetcode-left-pane');
+    if (leftPane) leftPane.classList.remove('pane-blackout');
+
+    const previewViewport = document.getElementById('live-preview-viewport');
+    if (previewViewport) previewViewport.classList.remove('pane-blackout');
+
     renderAllCanvases();
   }
 
-  btnUnlockQuestion.addEventListener('click', (e) => {
-    e.stopPropagation();
-    restoreQuestionView();
-  });
+  function restoreQuestionView() {
+    checkAndRestoreBlackout();
+  }
 
-  btnUnlockStudio.addEventListener('click', (e) => {
-    e.stopPropagation();
-    restoreQuestionView();
-  });
+  // Continuous Proctoring Watchdog: Keeps question panel 100% pitch black whenever window lacks focus
+  setInterval(() => {
+    if (!document.hasFocus() || document.hidden) {
+      if (!state.proctoring.isBlackedOut) {
+        triggerTargetedBlackout('Focus loss watchdog', BLACKOUT_HOLD_MS);
+      }
+    }
+  }, 100);
 
   function recordViolation(actionName) {
     state.proctoring.violations++;
@@ -1091,11 +1169,7 @@ function twoSum(nums, target) {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#f43f5e';
-    ctx.font = '700 18px "Inter", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('CONTENT BLACKED OUT • ANTI-CAPTURE SHIELD ENGAGED', canvas.width / 2, canvas.height / 2);
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // 100% solid pitch black, zero text
     ctx.restore();
   }
 
@@ -1608,12 +1682,13 @@ function twoSum(nums, target) {
     });
 
     btnSimulateSnipping.addEventListener('click', () => {
-      triggerTargetedBlackout('Simulated Snipping Tool trigger: Focus lost, question instantly obscured.');
+      // Simulate Snipping Tool: Pure black question panel for 3.5s, then seamless auto-restore
+      triggerTargetedBlackout('Simulated Snipping Tool trigger', BLACKOUT_HOLD_MS);
       recordViolation('Simulated Snipping Tool Grab');
-      showToast('Question Obscured', 'Only the question is blacked out. Exam continues uninterrupted.');
     });
 
     btnSimulatePrintscreen.addEventListener('click', () => {
+      // Simulate PrintScreen: Blacks out question panel for 3.5s, purges clipboard, then seamless auto-restore
       handlePrintScreenAttempt();
     });
 
